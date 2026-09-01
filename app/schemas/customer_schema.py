@@ -12,5 +12,5 @@ class CustomerResponse(BaseModel):
     phone: str
 
     model_config = {
-        "from_attributes": True  # Pydantic v2에서 orm_mode 대체
+        "from_attributes": True
     }

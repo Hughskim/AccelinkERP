@@ -1,20 +1,23 @@
-#AccelinkERP > routers > customer_router.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.database import get_db
+
+# SQLAlchemy 모델
 from app.models.customer import Customer
-from app.schemas.customer_schema import CustomerCreate, Customer
+
+# Pydantic 모델
+from app.schemas.customer_schema import CustomerCreate, CustomerResponse
 
 router = APIRouter(
     prefix="/customers",
     tags=["Customers"]
 )
 
-@router.get("/", response_model=list[Customer])
+@router.get("/", response_model=list[CustomerResponse])
 def get_customers(db: Session = Depends(get_db)):
     return db.query(Customer).all()
 
-@router.post("/", response_model=Customer)
+@router.post("/", response_model=CustomerResponse)
 def create_customer(customer: CustomerCreate, db: Session = Depends(get_db)):
     new_customer = Customer(
         name=customer.name,

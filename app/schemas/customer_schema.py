@@ -1,16 +1,16 @@
-#AccelinkERP > schemas > customer_schema.py
 from pydantic import BaseModel
 
-class CustomerBase(BaseModel):
+class CustomerCreate(BaseModel):
     name: str
-    email: str | None = None
-    phone: str | None = None
+    email: str
+    phone: str
 
-class CustomerCreate(CustomerBase):
-    pass
-
-class Customer(CustomerBase):
+class CustomerResponse(BaseModel):
     id: int
+    name: str
+    email: str
+    phone: str
 
-    class Config:
-        orm_mode = True
+    model_config = {
+        "from_attributes": True  # Pydantic v2에서 orm_mode 대체
+    }

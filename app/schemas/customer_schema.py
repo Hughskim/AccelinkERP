@@ -19,4 +19,4 @@ class CustomerResponse(CustomerBase):
     customer_id: int
 
     class Config:
-        from_attributes = True  -- SQLAlchemy 객체를 Pydantic이 자동으로 읽도록 설정
+        from_attributes = True  # SQLAlchemy 객체를 Pydantic이 자동으로 읽도록 설정

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 # 이전에 만든 데이터베이스 세션, 모델, 스키마 가져오기
-from app.database import get_db  -- 프로젝트의 DB 세션 생성 함수 위치 확인 필요
+from app.database import get_db  # 프로젝트의 DB 세션 생성 함수 위치 확인 필요
 from app.models.customer import CustomerMaster
 from app.schemas.customer_schema import CustomerCreate, CustomerResponse
 
@@ -53,11 +53,11 @@ def create_customer(customer_data: CustomerCreate, db: Session = Depends(get_db)
     
     try:
         db.add(db_customer)
-        db.commit()        -- 디비에 영구 반영
-        db.refresh(db_customer)  -- 자동 생성된 customer_id 값을 받아오기 위해 리프레시
+        db.commit()        # 디비에 영구 반영
+        db.refresh(db_customer)  # 자동 생성된 customer_id 값을 받아오기 위해 리프레시
         return db_customer
     except Exception as e:
-        db.rollback()      -- 에러 발생 시 롤백
+        db.rollback()      # 에러 발생 시 롤백
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Database error occurred: {str(e)}"

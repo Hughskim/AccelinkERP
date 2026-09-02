@@ -3,10 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 
 # 📌 1. 데이터베이스 바인딩을 위해 고객 및 제품 ORM 모델들을 모두 임포트합니다.
-from app.models import customer, product
+from app.models import customer, product, price
 
 # 📌 2. 연동할 라우터들을 가져옵니다.
-from app.routers import customer_router, product_router
+from app.routers import customer_router, product_router, price_router
 
 # 서버 시작 시 SQLAlchemy 모델 구조들을 DB 엔진과 연동 (테이블 구조 동기화)
 Base.metadata.create_all(bind=engine)
@@ -31,7 +31,7 @@ app.add_middleware(
 # 📌 3. 각 마스터 관리 도메인별 라우터를 등록합니다.
 app.include_router(customer_router.router, prefix="/api/customers", tags=["고객 관리 (Customer Master)"])
 app.include_router(product_router.router, prefix="/api/products", tags=["제품 관리 (Product Master)"])
-
+app.include_router(price_router.router, prefix="/api/prices", tags=["단가 및 가격 관리 (Price Management)"])
 
 @app.get("/", tags=["기본 시스템"])
 def root():

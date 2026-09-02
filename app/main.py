@@ -3,15 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.database import engine, Base
 from app.models import customer
 
-# 실제 도메인별 라우터들을 임포트합니다.
-from app.routers import (
-    customer_router,
-    product_router,   # 👈 수정: SQL 주석(--)을 Python 주석(#)으로 변경
-    rma_router,       # 👈 수정
-    sample_router     # 👈 수정
-)
+# 📌 현재 구현이 완료된 고객 관리 라우터만 정상적으로 불러옵니다.
+from app.routers import customer_router
 
-# 서버 시작 시 SQLAlchemy 모델 구조들을 DB 엔진과 바인딩
+# 서버 시작 시 SQLAlchemy 모델 구조들을 DB 엔진과 연동
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
@@ -31,11 +26,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 라우터 등록
+# 📌 고객 관리 라우터만 안전하게 경로 매핑을 수행합니다.
 app.include_router(customer_router.router, prefix="/api/customers", tags=["고객 관리 (Customer Master)"])
-app.include_router(product_router.router, prefix="/api/products", tags=["제품 관리 (Product Master)"])
-app.include_router(rma_router.router, prefix="/api/rma", tags=["RMA 관리"])
-app.include_router(sample_router.router, prefix="/api/samples", tags=["샘플 관리 (Sample Master/Process)"])
 
 
 @app.get("/", tags=["기본 시스템"])

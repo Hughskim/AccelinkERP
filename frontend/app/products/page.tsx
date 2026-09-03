@@ -1,37 +1,16 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { 
-  ArrowLeft, 
-  Package, 
-  Cpu, 
-  Milestone, 
-  Radio, 
-  Thermometer, 
-  Tag 
-} from 'lucide-react';
 import Link from 'next/link';
 
-// 실제 product_master 테이블 컬럼 구조와 100% 일치하는 프론트엔드 규격 정의
-interface Product {
-  product_id: number;
-  part_number: string;
-  is_active: boolean | null;
-  remarks: string | null;
-  category_value: string | null;
-  datarate_value: string | null;
-  package_value: string | null;
-  distance_value: string | null;
-  wavelength_value: string | null;
-  temp_value: string | null;
-}
-
 export default function ProductListPage() {
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts] = useState([]);
+  const [filtered, setFiltered] = useState([]);
+  const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState('');
 
-  // 화면이 켜지는 순간 Render 백엔드로 데이터를 요청
+  // ⭐ Render 서버 API 그대로 유지
   useEffect(() => {
     fetch('https://accelinkerp.onrender.com/api/products/')
       .then((res) => {
@@ -40,6 +19,7 @@ export default function ProductListPage() {
       })
       .then((data) => {
         setProducts(data);
+        setFiltered(data);
         setLoading(false);
       })
       .catch((err) => {
@@ -49,117 +29,122 @@ export default function ProductListPage() {
       });
   }, []);
 
+  // ⭐ 전체 필드 검색 기능
+  const handleSearch = (value) => {
+    setSearch(value);
+
+    if (!value.trim()) {
+      setFiltered(products);
+      return;
+    }
+
+    const lower = value.toLowerCase();
+
+    const result = products.filter((p) => {
+      return (
+        (p.part_number || '').toLowerCase().includes(lower) ||
+        (p.category_value || '').toLowerCase().includes(lower) ||
+        (p.package_value || '').toLowerCase().includes(lower) ||
+        (p.datarate_value || '').toLowerCase().includes(lower) ||
+        (p.temp_value || '').toLowerCase().includes(lower) ||
+        (p.distance_value || '').toLowerCase().includes(lower) ||
+        (p.wavelength_value || '').toLowerCase().includes(lower) ||
+        (p.remarks || '').toLowerCase().includes(lower)
+      );
+    });
+
+    setFiltered(result);
+  };
+
+  if (loading) {
+    return (
+      <div className="p-4 text-center text-slate-500">
+        로딩 중...
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-12">
-      
+
       {/* 상단 헤더 */}
-      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shadow-sm">
-        <Link href="/" className="text-slate-500 active:text-slate-800 p-1">
-          <ArrowLeft size={20} />
+      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-2 flex items-center justify-between shadow-sm">
+        <h1 className="font-bold text-base text-slate-800">제품 리스트</h1>
+
+        {/* 상단 신규 버튼 */}
+        <Link href="/products/new">
+          <button className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg active:bg-blue-700">
+            신규 등록
+          </button>
         </Link>
-        <h1 className="font-bold text-lg text-slate-800">제품 마스터 관리</h1>
       </header>
 
-      {/* 본문 */}
       <main className="p-4 space-y-3 max-w-md mx-auto">
-        {loading ? (
-          <div className="text-center py-12 text-slate-400 text-sm font-medium animate-pulse">
-            실시간 데이터베이스 연결 중...
+
+        {/* 에러 메시지 */}
+        {errorMsg && (
+          <div className="bg-rose-50 border border-rose-200 rounded-xl p-2 text-xs text-rose-700">
+            ⚠️ {errorMsg}
           </div>
-        ) : errorMsg ? (
-          <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-center text-xs text-rose-700">
-            ⚠️ 통신 오류: {errorMsg}
-          </div>
-        ) : products.length === 0 ? (
-          <div className="text-center py-12 text-slate-400 text-sm">
-            등록된 제품 정보가 없습니다.
+        )}
+
+        {/* ⭐ 검색창 + 검색 시에만 나타나는 신규 버튼 */}
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => handleSearch(e.target.value)}
+            placeholder="전체 필드 검색"
+            className="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm"
+          />
+
+          {/* 검색어가 있을 때만 표시 */}
+          {search.trim() !== '' && (
+            <Link href="/products/new">
+              <button className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg active:bg-blue-700">
+                신규
+              </button>
+            </Link>
+          )}
+        </div>
+
+        {/* 제품 리스트 */}
+        {filtered.length === 0 ? (
+          <div className="text-center text-slate-500 text-sm mt-4">
+            검색 결과가 없습니다.
           </div>
         ) : (
-          products.map((product) => (
-            <div 
-              key={product.product_id}
-              className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 active:bg-slate-50 transition-colors"
+          filtered.map((p) => (
+            <div
+              key={p.product_id}
+              className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm"
             >
-              
-              {/* 상단: ID + Part Number */}
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-2">
-                  <div className="bg-purple-50 p-2 rounded-lg text-purple-600">
-                    <Package size={16} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">
-                      ID: {product.product_id}
-                    </h3>
-                    <h4 className="font-extrabold text-base text-slate-800">
-                      {product.part_number}
-                    </h4>
-                  </div>
-                </div>
-
-                {/* 활성/비활성 */}
-                <span
-                  className={`text-[10px] px-2 py-0.5 rounded font-bold ${
-                    product.is_active
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-slate-100 text-slate-400'
-                  }`}
-                >
-                  {product.is_active ? '활성' : '비활성'}
-                </span>
+              <div className="font-bold text-sm text-slate-800">
+                {p.part_number}
               </div>
 
-              {/* 중단: 공통 코드 매핑 */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-600 pt-2 border-t border-slate-100">
-                <div className="flex items-center gap-2">
-                  <Cpu size={12} className="text-slate-400" />
-                  <span className="font-medium text-slate-400">Type:</span>
-                  <span className="font-bold text-slate-700">
-                    {product.package_value || '-'} ({product.datarate_value || '-'})
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Radio size={12} className="text-slate-400" />
-                  <span className="font-medium text-slate-400">Wave:</span>
-                  <span className="font-bold text-slate-700">
-                    {product.wavelength_value || '-'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Milestone size={12} className="text-slate-400" />
-                  <span className="font-medium text-slate-400">Dist:</span>
-                  <span className="font-bold text-slate-700">
-                    {product.distance_value || '-'}
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <Thermometer size={12} className="text-slate-400" />
-                  <span className="font-medium text-slate-400">Temp:</span>
-                  <span className="font-bold text-slate-700">
-                    {product.temp_value || '-'}
-                  </span>
-                </div>
+              <div className="text-xs text-slate-600 mt-1">
+                {p.category_value} / {p.package_value} / {p.datarate_value}
               </div>
 
-              {/* 카테고리 태그 */}
-              {product.category_value && (
-                <div className="flex items-center gap-1.5 pt-0.5">
-                  <Tag size={10} className="text-slate-400" />
-                  <span className="text-[10px] bg-slate-100 text-slate-500 font-medium px-2 py-0.5 rounded-full">
-                    {product.category_value}
-                  </span>
+              <div className="text-xs text-slate-500 mt-1">
+                {p.temp_value} / {p.distance_value} / {p.wavelength_value}
+              </div>
+
+              {p.remarks && (
+                <div className="text-xs text-slate-400 mt-1">
+                  비고: {p.remarks}
                 </div>
               )}
 
-              {/* 비고 */}
-              {product.remarks && (
-                <p className="bg-slate-50 text-[11px] text-slate-400 p-2 rounded-lg border border-slate-100 italic">
-                  📝 {product.remarks}
-                </p>
-              )}
+              {/* ⭐ 수정 버튼 (Link 적용) */}
+              <div className="flex gap-2 mt-3">
+                <Link href={`/products/${p.product_id}/edit`} className="flex-1">
+                  <button className="w-full py-1.5 bg-slate-200 text-slate-700 text-xs rounded-lg active:bg-slate-300">
+                    수정
+                  </button>
+                </Link>
+              </div>
             </div>
           ))
         )}

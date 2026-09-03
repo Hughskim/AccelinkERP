@@ -23,7 +23,7 @@ export default function CustomerListPage() {
     // 화면이 켜지는 순간 Render 백엔드로 데이터를 요청하는 함수를 실행합니다.
   useEffect(() => {
     // 1. 실제 유저님의 서버 도메인(accelinkerp.onrender.com)과 고객 엔드포인트(/api/customers)를 조합합니다.
-    fetch('https://onrender.com')
+    fetch('https://accelinkerp.onrender.com/api/customers/')
       .then((res) => {
         // 서버가 정상적인 응답(200 OK)을 주지 않았다면 에러를 던집니다.
         if (!res.ok) throw new Error('서버 응답 에러');

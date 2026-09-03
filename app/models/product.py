@@ -1,6 +1,16 @@
 from sqlalchemy import Column, Integer, String, Boolean, Text
 from app.database import Base
 
+class ProductCode(Base):
+    __tablename__ = "product_code"
+
+    code_id = Column(Integer, primary_key=True, index=True)
+    code_type = Column(String(50), nullable=False)
+    code_value = Column(String(50), nullable=False)
+    code_name = Column(String(100), nullable=False)
+    code_sort_order = Column(Integer, nullable=True)
+
+
 class ProductMaster(Base):
     # 실제 Neon DB의 테이블 이름과 매핑
     __tablename__ = "product_master"

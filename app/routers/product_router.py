@@ -107,4 +107,5 @@ def update_product(product_id: int, product_data: ProductMasterCreate, db: Sessi
     except Exception as e:
         db.rollback()
         print("🔥 DB ERROR:", e)
+        traceback.print_exc()   # ← Render에서도 전체 에러 스택이 출력됨
         raise HTTPException(status_code=500, detail=str(e))

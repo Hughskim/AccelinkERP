@@ -17,17 +17,19 @@ class ProductCodeResponse(ProductCodeBase):
         from_attributes = True
 
 
-# --- [2] Product Master 스키마 ---
 class ProductMasterBase(BaseModel):
     part_number: str = Field(..., max_length=100, description="파트 넘버")
     is_active: Optional[bool] = Field(True, description="사용 여부")
     remarks: Optional[str] = Field(None, description="비고")
-    category_id: Optional[int] = Field(None, description="카테고리 ID")
-    datarate_id: Optional[int] = Field(None, description="데이터레이트 ID")
-    package_id: Optional[int] = Field(None, description="패키지 ID")
-    distance_id: Optional[int] = Field(None, description="거리 ID")
-    wavelength_id: Optional[int] = Field(None, description="파장 ID")
-    temp_id: Optional[int] = Field(None, description="온도 ID")
+
+    # 실제 DB에 존재하는 value 컬럼만 유지
+    category_value: Optional[str] = None
+    datarate_value: Optional[str] = None
+    package_value: Optional[str] = None
+    distance_value: Optional[str] = None
+    wavelength_value: Optional[str] = None
+    temp_value: Optional[str] = None
+
 
 class ProductMasterCreate(ProductMasterBase):
     pass

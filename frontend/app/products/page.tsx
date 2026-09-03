@@ -1,28 +1,37 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { 
+  ArrowLeft, 
+  Package, 
+  Cpu, 
+  Milestone, 
+  Radio, 
+  Thermometer, 
+  Tag 
+} from 'lucide-react';
 import Link from 'next/link';
-import { ArrowLeft, Search, Package } from 'lucide-react';
 
+// 실제 product_master 테이블 컬럼 구조와 100% 일치하는 프론트엔드 규격 정의
 interface Product {
   product_id: number;
-  product_name: string;
-  product_code: string;
-  category: string;
-  spec: string;
-  unit: string;
+  part_number: string;
+  is_active: boolean | null;
   remarks: string | null;
+  category_value: string | null;
+  datarate_value: string | null;
+  package_value: string | null;
+  distance_value: string | null;
+  wavelength_value: string | null;
+  temp_value: string | null;
 }
 
 export default function ProductListPage() {
   const [products, setProducts] = useState<Product[]>([]);
-  const [filtered, setFiltered] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const [query, setQuery] = useState('');
-  const [searchOpen, setSearchOpen] = useState(false);
-
-  // 🔥 백엔드에서 제품 목록 불러오기
+  // 화면이 켜지는 순간 Render 백엔드로 데이터를 요청
   useEffect(() => {
     fetch('https://accelinkerp.onrender.com/api/products/')
       .then((res) => {
@@ -31,116 +40,124 @@ export default function ProductListPage() {
       })
       .then((data) => {
         setProducts(data);
-        setFiltered(data); // 초기에는 전체 목록 표시
         setLoading(false);
       })
       .catch((err) => {
         console.error('데이터 통신 에러:', err);
+        setErrorMsg('서버와 통신 중 문제가 발생했습니다.');
         setLoading(false);
       });
   }, []);
 
-  // 🔍 검색 기능 (제품명 + 제품코드)
-  useEffect(() => {
-    if (query.trim() === '') {
-      setFiltered(products);
-    } else {
-      const q = query.toLowerCase();
-      setFiltered(
-        products.filter(
-          (p) =>
-            p.product_name.toLowerCase().includes(q) ||
-            p.product_code.toLowerCase().includes(q)
-        )
-      );
-    }
-  }, [query, products]);
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-12">
-
-      {/* 📱 상단 헤더 */}
-      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-slate-500 active:text-slate-800 p-1">
-            <ArrowLeft size={20} />
-          </Link>
-          <h1 className="font-bold text-lg text-slate-800">제품 목록</h1>
-        </div>
-
-        {/* 🔍 검색 버튼 */}
-        <button
-          onClick={() => setSearchOpen(!searchOpen)}
-          className="p-2 text-slate-600 active:text-slate-800"
-        >
-          <Search size={20} />
-        </button>
+      
+      {/* 상단 헤더 */}
+      <header className="sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shadow-sm">
+        <Link href="/" className="text-slate-500 active:text-slate-800 p-1">
+          <ArrowLeft size={20} />
+        </Link>
+        <h1 className="font-bold text-lg text-slate-800">제품 마스터 관리</h1>
       </header>
 
-      {/* 🔍 검색창 (토글 방식) */}
-      {searchOpen && (
-        <div className="p-4 bg-slate-100 border-b border-slate-300">
-          <input
-            type="text"
-            placeholder="제품명 또는 제품코드 검색"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="w-full p-3 rounded-lg border border-slate-300 text-sm"
-          />
-        </div>
-      )}
-
-      {/* 📦 제품 리스트 */}
+      {/* 본문 */}
       <main className="p-4 space-y-3 max-w-md mx-auto">
         {loading ? (
           <div className="text-center py-12 text-slate-400 text-sm font-medium animate-pulse">
             실시간 데이터베이스 연결 중...
           </div>
-        ) : filtered.length === 0 ? (
+        ) : errorMsg ? (
+          <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-center text-xs text-rose-700">
+            ⚠️ 통신 오류: {errorMsg}
+          </div>
+        ) : products.length === 0 ? (
           <div className="text-center py-12 text-slate-400 text-sm">
-            검색 결과가 없습니다.
+            등록된 제품 정보가 없습니다.
           </div>
         ) : (
-          filtered.map((product) => (
-            <div
+          products.map((product) => (
+            <div 
               key={product.product_id}
               className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-3 active:bg-slate-50 transition-colors"
             >
-              {/* 타이틀 */}
+              
+              {/* 상단: ID + Part Number */}
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
-                  <div className="bg-indigo-50 p-2 rounded-lg text-indigo-600">
+                  <div className="bg-purple-50 p-2 rounded-lg text-purple-600">
                     <Package size={16} />
                   </div>
-                  <h3 className="font-bold text-base text-slate-800">
-                    {product.product_name}
-                  </h3>
+                  <div>
+                    <h3 className="font-bold text-xs text-slate-400 uppercase tracking-wider">
+                      ID: {product.product_id}
+                    </h3>
+                    <h4 className="font-extrabold text-base text-slate-800">
+                      {product.part_number}
+                    </h4>
+                  </div>
                 </div>
-                <span className="bg-slate-100 text-slate-600 text-xs px-2 py-0.5 rounded font-medium">
-                  {product.category}
+
+                {/* 활성/비활성 */}
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded font-bold ${
+                    product.is_active
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-slate-100 text-slate-400'
+                  }`}
+                >
+                  {product.is_active ? '활성' : '비활성'}
                 </span>
               </div>
 
-              {/* 상세 정보 */}
-              <div className="text-xs text-slate-500 space-y-1.5 pt-1 border-t border-slate-100">
+              {/* 중단: 공통 코드 매핑 */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-600 pt-2 border-t border-slate-100">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-slate-600">코드:</span>
-                  <span>{product.product_code}</span>
+                  <Cpu size={12} className="text-slate-400" />
+                  <span className="font-medium text-slate-400">Type:</span>
+                  <span className="font-bold text-slate-700">
+                    {product.package_value || '-'} ({product.datarate_value || '-'})
+                  </span>
                 </div>
+
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-slate-600">규격:</span>
-                  <span>{product.spec}</span>
+                  <Radio size={12} className="text-slate-400" />
+                  <span className="font-medium text-slate-400">Wave:</span>
+                  <span className="font-bold text-slate-700">
+                    {product.wavelength_value || '-'}
+                  </span>
                 </div>
+
                 <div className="flex items-center gap-2">
-                  <span className="font-medium text-slate-600">단위:</span>
-                  <span>{product.unit}</span>
+                  <Milestone size={12} className="text-slate-400" />
+                  <span className="font-medium text-slate-400">Dist:</span>
+                  <span className="font-bold text-slate-700">
+                    {product.distance_value || '-'}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Thermometer size={12} className="text-slate-400" />
+                  <span className="font-medium text-slate-400">Temp:</span>
+                  <span className="font-bold text-slate-700">
+                    {product.temp_value || '-'}
+                  </span>
                 </div>
               </div>
+
+              {/* 카테고리 태그 */}
+              {product.category_value && (
+                <div className="flex items-center gap-1.5 pt-0.5">
+                  <Tag size={10} className="text-slate-400" />
+                  <span className="text-[10px] bg-slate-100 text-slate-500 font-medium px-2 py-0.5 rounded-full">
+                    {product.category_value}
+                  </span>
+                </div>
+              )}
 
               {/* 비고 */}
               {product.remarks && (
                 <p className="bg-slate-50 text-[11px] text-slate-400 p-2 rounded-lg border border-slate-100 italic">
-                  💡 {product.remarks}
+                  📝 {product.remarks}
                 </p>
               )}
             </div>

@@ -56,6 +56,7 @@ export default function MobileDashboard() {
           </div>
           </Link>
           {/* 2. 제품 마스터 관리 카드 */}
+          <Link href="/products" className="block">
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between active:bg-slate-100 transition-colors">
             <div className="flex items-center gap-4">
               <div className="bg-purple-100 p-3 rounded-xl text-purple-600">
@@ -65,10 +66,11 @@ export default function MobileDashboard() {
                 <h3 className="font-bold text-base text-slate-800">제품 관리 (Product)</h3>
                 <p className="text-slate-400 text-xs">광모듈 사양 및 공통 코드 사전</p>
               </div>
+            
             </div>
             <span className="text-slate-300 font-bold text-lg">❯</span>
           </div>
-
+          </Link>
           {/* 3. 가격/단가 관리 카드 */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between active:bg-slate-100 transition-colors">
             <div className="flex items-center gap-4">

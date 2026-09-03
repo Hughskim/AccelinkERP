@@ -20,11 +20,17 @@ export default function CustomerListPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 화면이 켜지는 순간 Render 백엔드로 데이터를 요청하는 함수를 실행합니다.
+    // 화면이 켜지는 순간 Render 백엔드로 데이터를 요청하는 함수를 실행합니다.
   useEffect(() => {
+    // 1. 실제 유저님의 서버 도메인(accelinkerp.onrender.com)과 고객 엔드포인트(/api/customers)를 조합합니다.
     fetch('https://onrender.com')
-      .then((res) => res.json())
+      .then((res) => {
+        // 서버가 정상적인 응답(200 OK)을 주지 않았다면 에러를 던집니다.
+        if (!res.ok) throw new Error('서버 응답 에러');
+        return res.json();
+      })
       .then((data) => {
+        // 받아온 데이터를 저장소에 넣고 로딩창을 끕니다.
         setCustomers(data);
         setLoading(false);
       })
@@ -33,6 +39,7 @@ export default function CustomerListPage() {
         setLoading(false);
       });
   }, []);
+
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-12">

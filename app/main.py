@@ -38,13 +38,13 @@ app.add_middleware(
 )
 
 # ERP 전체 핵심 도메인별 API 라우터 일괄 등록
-app.include_router(customer_router.router, prefix="/api/customers", tags=["고객 관리 (Customer Master)"])
-app.include_router(product_router.router, prefix="/api/products", tags=["제품 관리 (Product Master)"])
-app.include_router(price_router.router, prefix="/api/prices", tags=["단가 및 가격 관리 (Price Management)"])
-app.include_router(po_router.router, prefix="/api/po", tags=["수주 및 선적/백로그 관리 (PO & Backlog & Shipment)"])
-app.include_router(payment_router.router, prefix="/api/payments", tags=["수금 및 커미션 정산 관리 (Payment & Commission)"])
-app.include_router(rma_router.router, prefix="/api/rma", tags=["RMA 및 반품/수리 관리 (RMA Management)"])
-app.include_router(sample_router.router, prefix="/api/samples", tags=["샘플 출하 및 승인 관리 (Sample Tracking)"])
+app.include_router(customer_router, prefix="/api/customers", tags=["고객 관리 (Customer Master)"])
+app.include_router(product_router, prefix="/api/products", tags=["제품 관리 (Product Master)"])
+app.include_router(price_router, prefix="/api/prices", tags=["단가 및 가격 관리 (Price Management)"])
+app.include_router(po_router, prefix="/api/po", tags=["수주 및 선적/백로그 관리 (PO & Backlog & Shipment)"])
+app.include_router(payment_router, prefix="/api/payments", tags=["수금 및 커미션 정산 관리 (Payment & Commission)"])
+app.include_router(rma_router, prefix="/api/rma", tags=["RMA 및 반품/수리 관리 (RMA Management)"])
+app.include_router(sample_router, prefix="/api/samples", tags=["샘플 출하 및 승인 관리 (Sample Tracking)"])
 
 
 @app.get("/", tags=["기본 시스템"])

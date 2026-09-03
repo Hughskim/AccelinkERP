@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
+import traceback
 from app.database import get_db
 from app.models.product import ProductCode, ProductMaster
 from app.schemas.product_schema import (

@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from sqlalchemy import or_
 import traceback
 
 from app.database import get_db
+from app.models.product import ProductMaster
 from app.models.price import Price, PriceHistory
 from app.models.codes import CurrencyCodes, PriceTypeCodes, PricePolicyCodes
 from app.schemas.price_schema import (
@@ -12,6 +13,48 @@ from app.schemas.price_schema import (
 )
 
 router = APIRouter()
+
+# ----------------------------------------------------
+# 📌 [0] 가격 검색 API (핵심)
+# ----------------------------------------------------
+@router.get("", summary="제품 + 가격 검색")
+def search_prices(keyword: str, db: Session = Depends(get_db)):
+
+    # 1) 제품 검색 (product_router와 동일한 방식)
+    products = (
+        db.query(ProductMaster)
+        .filter(
+            or_(
+                ProductMaster.part_number.ilike(f"%{keyword}%"),
+                ProductMaster.category_value.ilike(f"%{keyword}%"),
+                ProductMaster.package_value.ilike(f"%{keyword}%"),
+                ProductMaster.datarate_value.ilike(f"%{keyword}%"),
+                ProductMaster.temp_value.ilike(f"%{keyword}%"),
+                ProductMaster.distance_value.ilike(f"%{keyword}%"),
+                ProductMaster.wavelength_value.ilike(f"%{keyword}%"),
+                ProductMaster.remarks.ilike(f"%{keyword}%"),
+            )
+        )
+        .all()
+    )
+
+    # 2) 제품별 가격 리스트 묶기
+    result = []
+    for p in products:
+        prices = (
+            db.query(Price)
+            .filter(Price.product_id == p.product_id)
+            .order_by(Price.price_id)
+            .all()
+        )
+
+        result.append({
+            "product": p,
+            "prices": prices
+        })
+
+    return {"products": result}
+
 
 # ----------------------------------------------------
 # 📌 [1] 가격 코드 엔드포인트 (통화/타입/정책)

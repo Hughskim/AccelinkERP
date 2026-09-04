@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 import traceback
+import sys
 from app.database import get_db
 from app.models.product import ProductCode, ProductMaster
 from app.schemas.product_schema import (
@@ -35,19 +36,25 @@ def get_codes_by_type(code_type: str, db: Session = Depends(get_db)):
 
 
 # 신규 코드 등록
-@router.post("/codes", response_model=ProductCodeResponse, status_code=status.HTTP_201_CREATED, summary="신규 제품 코드 등록")
-def create_product_code(code_data: ProductCodeCreate, db: Session = Depends(get_db)):
-    db_code = ProductCode(**code_data.model_dump())
+
+@router.post("/", response_model=ProductMasterResponse, status_code=status.HTTP_201_CREATED, summary="신규 제품 등록")
+def create_product(product_data: ProductMasterCreate, db: Session = Depends(get_db)):
+    # 💡 데이터 변환과 가공 과정 전체를 try 안으로 이동합니다.
     try:
-        db.add(db_code)
+        print("📥 [CREATE_PRODUCT] RECEIVED PAYLOAD:", product_data.model_dump(), flush=True)
+        
+        db_product = ProductMaster(**product_data.model_dump())
+        db.add(db_product)
         db.commit()
-        db.refresh(db_code)
-        return db_code
+        db.refresh(db_product)
+        return db_product
+        
     except Exception as e:
         db.rollback()
-          # 💡 변수명 충돌이 없는 안전한 로그 출력 코드
-        print("🔥 [CREATE_PRODUCT] ERROR OCCURRED:", str(e))
-        traceback.print_exc()   # ← 이것이 있으면 Render 로그에 정확한 에러 줄번호와 원인이 찍힙니다.
+        # 💡 flush=True를 주면 Render 콘솔에 실시간으로 즉시 출력됩니다.
+        print("🔥 [CREATE_PRODUCT] FATAL DB/SERVER ERROR:", str(e), flush=True)
+        traceback.print_exc(file=sys.stdout) # 💡 출력 버퍼 우회를 위해 표준 출력으로 강제 지정
+        sys.stdout.flush()
         raise HTTPException(status_code=500, detail=str(e))
 
 

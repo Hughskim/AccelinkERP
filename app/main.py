@@ -17,7 +17,7 @@ from app.routers import (
 )
 
 # 서버 시작 시 Neon PostgreSQL 물리 테이블 매핑 및 스키마 구조 정합성 동기화
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="AccelinkERP API",

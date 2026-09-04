@@ -52,3 +52,21 @@ class PriceHistoryResponse(PriceHistoryBase):
 
     class Config:
         from_attributes = True
+
+# 파일 최하단에 추가해 주세요
+
+# ---------------------------------------------------------
+# 3) 최초 가격 일괄 등록용 복합 스키마 (추천)
+# ---------------------------------------------------------
+class PriceWithFirstHistoryCreate(BaseModel):
+    # 마스터 (Price) 영역
+    product_id: int
+    customer_id: int
+    currency_code: str = Field(..., max_length=10, description="통화 (예: USD)")
+    price_type: Optional[str] = Field(None, max_length=20, description="가격 타입")
+    price_policy: Optional[str] = Field(None, max_length=20, description="가격 정책")
+    
+    # 최초 이력 (PriceHistory) 영역
+    price_value: Decimal = Field(..., description="최초 실제 단가")
+    price_quote: Optional[Decimal] = Field(None, description="최초 견적 단가")
+    price_date: datetime = Field(default_factory=datetime.now, description="가격 승인/적용 날짜")

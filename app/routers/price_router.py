@@ -60,19 +60,19 @@ def search_prices(keyword: str, db: Session = Depends(get_db)):
 # 📌 [1] 가격 코드 엔드포인트 (통화/타입/정책)
 # ----------------------------------------------------
 
-@router.get("/codes/currency", response_model=List[str], summary="통화 코드 목록 조회")
+@router.get("/codes/currency", response_model=list[str], summary="통화 코드 목록 조회")
 def get_currency_codes(db: Session = Depends(get_db)):
     codes = db.query(CurrencyCodes).order_by(CurrencyCodes.currency_code).all()
     return [c.currency_code for c in codes]
 
 
-@router.get("/codes/type", response_model=List[str], summary="가격 타입 코드 목록 조회")
+@router.get("/codes/type", response_model=list[str], summary="가격 타입 코드 목록 조회")
 def get_price_type_codes(db: Session = Depends(get_db)):
     codes = db.query(PriceTypeCodes).order_by(PriceTypeCodes.type_code).all()
     return [c.type_code for c in codes]
 
 
-@router.get("/codes/policy", response_model=List[str], summary="가격 정책 코드 목록 조회")
+@router.get("/codes/policy", response_model=list[str], summary="가격 정책 코드 목록 조회")
 def get_price_policy_codes(db: Session = Depends(get_db)):
     codes = db.query(PricePolicyCodes).order_by(PricePolicyCodes.policy_code).all()
     return [c.policy_code for c in codes]
@@ -82,7 +82,7 @@ def get_price_policy_codes(db: Session = Depends(get_db)):
 # 📌 [2] 현재 가격 정보 (Price)
 # ----------------------------------------------------
 
-@router.get("/", response_model=List[PriceResponse], summary="전체 가격 목록 조회")
+@router.get("/", response_model=list[PriceResponse], summary="전체 가격 목록 조회")
 def get_prices(db: Session = Depends(get_db)):
     return db.query(Price).order_by(Price.price_id).all()
 
@@ -115,7 +115,7 @@ def create_price(price_data: PriceCreate, db: Session = Depends(get_db)):
 # 📌 [3] 가격 이력 (Price History)
 # ----------------------------------------------------
 
-@router.get("/history", response_model=List[PriceHistoryResponse], summary="전체 가격 이력 조회")
+@router.get("/history", response_model=list[PriceHistoryResponse], summary="전체 가격 이력 조회")
 def get_price_histories(db: Session = Depends(get_db)):
     return db.query(PriceHistory).order_by(PriceHistory.history_id).all()
 

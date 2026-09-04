@@ -23,7 +23,7 @@ def search_prices(keyword: str, db: Session = Depends(get_db)):
     if not keyword or not keyword.strip():
         return {"products": []}
 
-    # 1) 제품 검색 (product_router와 동일한 방식)
+    # 1) 제품 검색 (기존과 동일)
     products = (
         db.query(ProductMaster)
         .filter(
@@ -41,7 +41,7 @@ def search_prices(keyword: str, db: Session = Depends(get_db)):
         .all()
     )
 
-    # 2) 제품별 가격 리스트 묶기
+    # 2) 제품별 가격 + 최신 이력 묶기
     result = []
     for p in products:
         prices = (
@@ -51,13 +51,45 @@ def search_prices(keyword: str, db: Session = Depends(get_db)):
             .all()
         )
 
+        extended_prices = []
+        for price in prices:
+            # 🏢 A. CustomerMaster 조인하여 실제 고객명 가져오기
+            from app.models.customer import CustomerMaster  # (실제 본인 모델 패키지명 확인 필요)
+            customer = db.query(CustomerMaster).filter(CustomerMaster.customer_id == price.customer_id).first()
+            customer_name = customer.customer_name if customer else f"미등록(ID {price.customer_id})"
+
+            # 📈 B. PriceHistory 테이블에서 해당 price_id의 가장 최근(최신) 이력 1건 가져오기
+            latest_history = (
+                db.query(PriceHistory)
+                .filter(PriceHistory.price_id == price.price_id)
+                .order_by(PriceHistory.history_id.desc())  # 가장 최신 이력이 위로 오도록 정렬 (컬럼명이 다르면 변경 가능)
+                .first()
+            )
+
+            # 🛠️ C. 캡처 화면상의 실제 price 테이블 컬럼 구조와 최신 이력 데이터 병합
+            price_dict = {
+                "price_id": price.price_id,
+                "product_id": price.product_id,
+                "customer_id": price.customer_id,
+                "customer_name": customer_name,
+                "currency_code": price.currency_code,  # 캡처에 기재된 정확한 컬럼명
+                "price_type": price.price_type,        # 캡처에 기재된 정확한 컬럼명
+                "price_policy": price.price_policy,    # 캡처에 기재된 정확한 컬럼명
+                "is_active": price.is_active,          # 캡처에 기재된 정확한 컬럼명
+                
+                # 아래 데이터는 PriceHistory(최신 이력)가 존재할 때만 추출하여 주입
+                "price_value": latest_history.price_value if latest_history else None,
+                "price_quote": latest_history.price_quote if latest_history else None,
+                "price_date": latest_history.price_date if latest_history else None
+            }
+            extended_prices.append(price_dict)
+
         result.append({
             "product": p,
-            "prices": prices
+            "prices": extended_prices
         })
 
     return {"products": result}
-
 
 # ----------------------------------------------------
 # 📌 [1] 가격 코드 엔드포인트 (통화/타입/정책)

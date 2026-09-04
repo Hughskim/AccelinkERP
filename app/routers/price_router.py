@@ -15,10 +15,13 @@ from app.schemas.price_schema import (
 router = APIRouter()
 
 # ----------------------------------------------------
-# 📌 [0] 가격 검색 API (핵심)
+# 📌 [0] 가격 검색 API (명시적 경로 변경)
 # ----------------------------------------------------
-@router.get("", summary="제품 + 가격 검색")
+# 경로 충돌을 방지하기 위해 주소를 "" 에서 "/search"로 변경했습니다.
+@router.get("/search", summary="제품 + 가격 검색")
 def search_prices(keyword: str, db: Session = Depends(get_db)):
+    if not keyword or not keyword.strip():
+        return {"products": []}
 
     # 1) 제품 검색 (product_router와 동일한 방식)
     products = (
@@ -87,6 +90,7 @@ def get_prices(db: Session = Depends(get_db)):
     return db.query(Price).order_by(Price.price_id).all()
 
 
+# 순서상 /{price_id} 보다 /history가 아래에 있으면 대상을 문자열/숫자로 오인하므로 이력을 위로 올리는 구조가 이상적입니다.
 @router.get("/{price_id}", response_model=PriceResponse, summary="특정 가격 조회")
 def get_price(price_id: int, db: Session = Depends(get_db)):
     price = db.query(Price).filter(Price.price_id == price_id).first()

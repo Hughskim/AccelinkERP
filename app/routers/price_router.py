@@ -182,7 +182,6 @@ def create_currency_code(data: QuickCurrencyCreate, db: Session = Depends(get_db
         currency_name=data.currency_name,
         symbol=data.symbol,
         decimal_places=data.decimal_places,
-        description=data.description,
         is_active=True  # ❌ 요구사항 반영: UI에서 제외하고 백엔드에서 기본값 True 자동 주입
     )
     try:

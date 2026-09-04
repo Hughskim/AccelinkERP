@@ -109,7 +109,7 @@ export default function PriceCreatePage() {
 
     // 💡 전달받은 각 데이터 테이블 명세와 컬럼명 규격에 맞게 완벽 분기
     if (activeForm === "policy") {
-      endpoint = "https://onrender.com";
+      endpoint = "https://accelinkerp.onrender.com/api/prices/codes/policy";
       payload = {
         policy_code: inlineForm.code.trim(),
         policy_name: inlineForm.name.trim(),
@@ -117,7 +117,7 @@ export default function PriceCreatePage() {
         // ❌ 요구사항 반영: 마지막 is_active는 생략
       };
     } else if (activeForm === "type") {
-      endpoint = "https://onrender.com";
+      endpoint = "https://accelinkerp.onrender.com/api/prices/codes/type";
       payload = {
         type_code: inlineForm.code.trim(),
         type_name: inlineForm.name.trim(),
@@ -125,7 +125,7 @@ export default function PriceCreatePage() {
         // ❌ 요구사항 반영: 마지막 is_active는 생략
       };
     } else if (activeForm === "currency") {
-      endpoint = "https://onrender.com";
+      endpoint = "https://accelinkerp.onrender.com/api/prices/codes/currency";
       payload = {
         currency_code: inlineForm.code.trim(),
         currency_name: inlineForm.name.trim(),

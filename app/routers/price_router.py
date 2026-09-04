@@ -112,6 +112,89 @@ def get_price_policy_codes(db: Session = Depends(get_db)):
     return [c.policy_code for c in codes]
 
 
+# 📄 app/routers/price_router.py의 기존 GET 함수들 바로 아래에 추가합니다.
+
+from pydantic import BaseModel, Field
+from typing import Optional
+
+# 🛠️ 프론트엔드 인라인 서브폼이 전송하는 DB 스키마 구조 맞춤 Pydantic 모델
+class QuickTypeCreate(BaseModel):
+    type_code: str = Field(..., max_length=20)
+    type_name: str = Field(..., max_length=100)
+    description: Optional[str] = None
+
+class QuickPolicyCreate(BaseModel):
+    policy_code: str = Field(..., max_length=20)
+    policy_name: str = Field(..., max_length=100)
+    description: Optional[str] = None
+
+class QuickCurrencyCreate(BaseModel):
+    currency_code: str = Field(..., max_length=10)
+    currency_name: str = Field(..., max_length=50)
+    symbol: Optional[str] = Field(None, max_length=10)
+    decimal_places: Optional[int] = None
+    description: Optional[str] = None
+
+
+# 🚀 [1] 가격 타입 코드 등록 (POST)
+@router.post("/codes/type", status_code=201, summary="가격 타입 코드 추가")
+def create_price_type_code(data: QuickTypeCreate, db: Session = Depends(get_db)):
+    db_item = PriceTypeCodes(
+        type_code=data.type_code,
+        type_name=data.type_name,
+        description=data.description,
+        is_active=True  # ❌ 요구사항 반영: UI에서 제외하고 백엔드에서 기본값 True 자동 주입
+    )
+    try:
+        db.add(db_item)
+        db.commit()
+        db.refresh(db_item)
+        return db_item
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"가격 타입 코드 생성 실패: {str(e)}")
+
+
+# 🚀 [2] 가격 정책 코드 등록 (POST)
+@router.post("/codes/policy", status_code=201, summary="가격 정책 코드 추가")
+def create_price_policy_code(data: QuickPolicyCreate, db: Session = Depends(get_db)):
+    db_item = PricePolicyCodes(
+        policy_code=data.policy_code,
+        policy_name=data.policy_name,
+        description=data.description,
+        is_active=True  # ❌ 요구사항 반영: UI에서 제외하고 백엔드에서 기본값 True 자동 주입
+    )
+    try:
+        db.add(db_item)
+        db.commit()
+        db.refresh(db_item)
+        return db_item
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"가격 정책 코드 생성 실패: {str(e)}")
+
+
+# 🚀 [3] 통화 코드 등록 (POST)
+@router.post("/codes/currency", status_code=201, summary="통화 코드 추가")
+def create_currency_code(data: QuickCurrencyCreate, db: Session = Depends(get_db)):
+    db_item = CurrencyCodes(
+        currency_code=data.currency_code,
+        currency_name=data.currency_name,
+        symbol=data.symbol,
+        decimal_places=data.decimal_places,
+        description=data.description,
+        is_active=True  # ❌ 요구사항 반영: UI에서 제외하고 백엔드에서 기본값 True 자동 주입
+    )
+    try:
+        db.add(db_item)
+        db.commit()
+        db.refresh(db_item)
+        return db_item
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"통화 코드 생성 실패: {str(e)}")
+
+
 # ----------------------------------------------------
 # 📌 [2] 현재 가격 정보 (Price 마스터 관리)
 # ----------------------------------------------------

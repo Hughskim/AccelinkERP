@@ -120,7 +120,7 @@ export default function PriceSearchPage() {
                   </div>
 
                   {/* 독립 버튼으로 항상 새 고객 가격 등록 가능 */}
-                  <Link href={`/prices/create?product_id=${product.product_id}`}>
+                  <Link href={`/prices/create?product_id=${product.product_id}&part_number=${encodeURIComponent(product.part_number)}`}>
                     <button className="shrink-0 px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-blue-600 text-[10px] font-bold rounded border border-slate-200 transition">
                       + 새 가격 등록
                     </button>

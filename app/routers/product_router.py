@@ -45,6 +45,9 @@ def create_product_code(code_data: ProductCodeCreate, db: Session = Depends(get_
         return db_code
     except Exception as e:
         db.rollback()
+          # 💡 변수명 충돌이 없는 안전한 로그 출력 코드
+        print("🔥 [CREATE_PRODUCT] ERROR OCCURRED:", str(e))
+        traceback.print_exc()   # ← 이것이 있으면 Render 로그에 정확한 에러 줄번호와 원인이 찍힙니다.
         raise HTTPException(status_code=500, detail=str(e))
 
 

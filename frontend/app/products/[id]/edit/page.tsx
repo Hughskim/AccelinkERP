@@ -7,7 +7,7 @@ import { useRouter, useParams } from 'next/navigation';
 
 export default function ProductEditPage() {
   const router = useRouter();
-  const { id } = useParams(); // /products/[id]/edit
+  const { id } = useParams();
 
   const [showNewCode, setShowNewCode] = useState({
     category: false,
@@ -18,15 +18,22 @@ export default function ProductEditPage() {
     wavelength: false,
   });
 
-  const [newCodeValue, setNewCodeValue] = useState('');
+  const [newCode, setNewCode] = useState({
+    category: { type: 'category', value: '', name: '' },
+    package: { type: 'package', value: '', name: '' },
+    datarate: { type: 'datarate', value: '', name: '' },
+    temp: { type: 'temp', value: '', name: '' },
+    distance: { type: 'distance', value: '', name: '' },
+    wavelength: { type: 'wavelength', value: '', name: '' },
+  });
 
   const [codes, setCodes] = useState({
-    category: [] as string[],
-    package: [] as string[],
-    datarate: [] as string[],
-    temp: [] as string[],
-    distance: [] as string[],
-    wavelength: [] as string[],
+    category: [] as any[],
+    package: [] as any[],
+    datarate: [] as any[],
+    temp: [] as any[],
+    distance: [] as any[],
+    wavelength: [] as any[],
   });
 
   const [form, setForm] = useState({
@@ -45,56 +52,181 @@ export default function ProductEditPage() {
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // 임시 mock 데이터 (백엔드 API 준비되기 전까지)
-  const mockProduct = {
-    part_number: 'TEST-SFP-10G',
-    category_value: 'Ethernet',
-    package_value: 'SFP',
-    datarate_value: '10G',
-    temp_value: 'C-temp',
-    distance_value: '10km',
-    wavelength_value: '1310nm',
-    remarks: '테스트 제품',
-    is_active: true,
+  // -----------------------------
+  // 코드 목록 로딩
+  // -----------------------------
+  const loadCodes = async () => {
+    try {
+      const res = await fetch('https://accelinkerp.onrender.com/api/products/codes');
+      const data = await res.json();
+
+      const formatted: any = {
+        category: [],
+        package: [],
+        datarate: [],
+        temp: [],
+        distance: [],
+        wavelength: [],
+      };
+
+      Object.keys(formatted).forEach((key) => {
+        formatted[key] = data
+          .filter((d: any) => d.code_type === key)
+          .sort((a: any, b: any) => a.code_sort_order - b.code_sort_order)
+          .map((d: any) => ({
+            value: d.code_value,
+            name: d.code_name,
+            sort: d.code_sort_order,
+          }));
+      });
+
+      setCodes(formatted);
+    } catch (err) {
+      console.error('코드 로딩 실패:', err);
+    }
   };
 
-  const mockCodes = {
-    category: ['Ethernet', 'Telecom'],
-    package: ['SFP', 'QSFP'],
-    datarate: ['1G', '10G', '25G'],
-    temp: ['C-temp', 'I-temp'],
-    distance: ['10km', '40km'],
-    wavelength: ['1310nm', '1550nm'],
+  // -----------------------------
+  // 기존 제품 데이터 로딩
+  // -----------------------------
+  const loadProduct = async () => {
+    try {
+      const res = await fetch(`https://accelinkerp.onrender.com/api/products/${id}`);
+      const data = await res.json();
+
+      setForm({
+        part_number: data.part_number,
+        category_value: data.category_value || '',
+        package_value: data.package_value || '',
+        datarate_value: data.datarate_value || '',
+        temp_value: data.temp_value || '',
+        distance_value: data.distance_value || '',
+        wavelength_value: data.wavelength_value || '',
+        remarks: data.remarks || '',
+        is_active: data.is_active,
+      });
+    } catch (err) {
+      console.error('제품 로딩 실패:', err);
+      setErrorMsg('제품 정보를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    // 나중에 백엔드 API로 교체
-    setCodes(mockCodes);
-    setForm(mockProduct);
-    setLoading(false);
+    loadCodes();
+    loadProduct();
   }, []);
 
   const handleChange = (field: string, value: string) => {
     setForm({ ...form, [field]: value });
   };
 
-  const handleAddCode = (type: string) => {
-    if (!newCodeValue.trim()) {
-      setErrorMsg('값을 입력해주세요.');
+  const handleNewCodeChange = (type: string, field: 'type' | 'value' | 'name', value: string) => {
+    setNewCode({
+      ...newCode,
+      [type]: {
+        ...newCode[type as keyof typeof newCode],
+        [field]: value,
+      },
+    });
+  };
+
+  const handleAddCode = async (type: string) => {
+    const payload = newCode[type as keyof typeof newCode];
+
+    if (!payload.type.trim() || !payload.value.trim() || !payload.name.trim()) {
+      setErrorMsg('code_type, code_value, code_name을 모두 입력해주세요.');
       return;
     }
 
-    const updated = [...(codes as any)[type], newCodeValue];
+    try {
+      const currentList = codes[type as keyof typeof codes];
+      const maxSort =
+        currentList.length > 0 ? Math.max(...currentList.map((c: any) => c.sort)) : 0;
+      const nextSortOrder = maxSort + 1;
 
-    setCodes({ ...codes, [type]: updated });
-    handleChange(`${type}_value`, newCodeValue);
+      await fetch('https://accelinkerp.onrender.com/api/products/codes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code_type: payload.type,
+          code_value: payload.value,
+          code_name: payload.name,
+          code_sort_order: nextSortOrder,
+        }),
+      });
 
-    setNewCodeValue('');
+      setNewCode({
+        ...newCode,
+        [type]: { type, value: '', name: '' },
+      });
+      setShowNewCode({ ...showNewCode, [type]: false });
+
+      await loadCodes();
+
+      handleChange(`${type}_value`, payload.value);
+    } catch (err) {
+      setErrorMsg('코드 등록 중 오류 발생');
+    }
+  };
+
+  const handleCancelNewCode = (type: string) => {
+    setNewCode({
+      ...newCode,
+      [type]: { type, value: '', name: '' },
+    });
     setShowNewCode({ ...showNewCode, [type]: false });
   };
 
-  const renderLine = (label: string, field: string, list: string[]) => {
+  // -----------------------------
+  // 수정 제출
+  // -----------------------------
+  const handleSubmit = async () => {
+    if (!form.part_number.trim()) {
+      setErrorMsg('Part Number는 필수입니다.');
+      return;
+    }
+
+    setSaving(true);
+    setErrorMsg(null);
+
+    try {
+      const payload = {
+        part_number: form.part_number,
+        is_active: form.is_active,
+        remarks: form.remarks || null,
+
+        category_value: form.category_value || null,
+        datarate_value: form.datarate_value || null,
+        package_value: form.package_value || null,
+        distance_value: form.distance_value || null,
+        wavelength_value: form.wavelength_value || null,
+        temp_value: form.temp_value || null,
+      };
+
+      const res = await fetch(`https://accelinkerp.onrender.com/api/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error('수정 실패');
+
+      router.push('/products');
+    } catch (err) {
+      setErrorMsg('제품 수정 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // -----------------------------
+  // 공통 UI 렌더링
+  // -----------------------------
+  const renderLine = (label: string, field: string, list: any[]) => {
     const type = field.replace('_value', '');
+    const nc = newCode[type as keyof typeof newCode];
 
     return (
       <div className="mt-2">
@@ -109,14 +241,16 @@ export default function ProductEditPage() {
             className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-slate-300"
           >
             <option value="">선택</option>
-            {list.map((v) => (
-              <option key={v} value={v}>{v}</option>
+            {list.map((v: any) => (
+              <option key={v.value} value={v.value}>
+                {v.value} | {v.name}
+              </option>
             ))}
           </select>
 
           <button
             onClick={() =>
-              setShowNewCode({ ...showNewCode, [type]: !showNewCode[type] })
+              setShowNewCode({ ...showNewCode, [type]: !showNewCode[type as keyof typeof showNewCode] })
             }
             className="px-2 py-1.5 bg-slate-200 rounded-lg active:bg-slate-300"
           >
@@ -124,36 +258,57 @@ export default function ProductEditPage() {
           </button>
         </div>
 
-        {showNewCode[type] && (
-          <div className="mt-1 flex gap-2">
-            <input
-              type="text"
-              value={newCodeValue}
-              onChange={(e) => setNewCodeValue(e.target.value)}
-              className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-slate-300"
-              placeholder={`${label} 신규 등록`}
-            />
-            <button
-              onClick={() => handleAddCode(type)}
-              className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg"
-            >
-              등록
-            </button>
+        {showNewCode[type as keyof typeof showNewCode] && (
+          <div className="mt-2 space-y-1 border border-slate-200 rounded-lg p-2 bg-slate-50">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-slate-600 w-20">code_type</span>
+              <input
+                type="text"
+                value={nc.type}
+                onChange={(e) => handleNewCodeChange(type, 'type', e.target.value)}
+                className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-slate-300"
+                placeholder={type}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-slate-600 w-20">code_value</span>
+              <input
+                type="text"
+                value={nc.value}
+                onChange={(e) => handleNewCodeChange(type, 'value', e.target.value)}
+                className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-slate-300"
+                placeholder="예: OSFP"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-slate-600 w-20">code_name</span>
+              <input
+                type="text"
+                value={nc.name}
+                onChange={(e) => handleNewCodeChange(type, 'name', e.target.value)}
+                className="flex-1 px-2 py-1.5 text-sm rounded-lg border border-slate-300"
+                placeholder="예: OSFP"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                onClick={() => handleAddCode(type)}
+                className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg"
+              >
+                등록
+              </button>
+              <button
+                onClick={() => handleCancelNewCode(type)}
+                className="px-3 py-1.5 bg-slate-300 text-xs rounded-lg"
+              >
+                취소
+              </button>
+            </div>
           </div>
         )}
       </div>
     );
-  };
-
-  const handleSubmit = () => {
-    setSaving(true);
-
-    // 나중에 백엔드 PUT API로 교체
-    console.log('수정된 데이터:', form);
-
-    setTimeout(() => {
-      router.push('/products');
-    }, 500);
   };
 
   if (loading) {
@@ -166,7 +321,6 @@ export default function ProductEditPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 pb-12">
-
       <header className="sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-2 flex items-center gap-3 shadow-sm">
         <Link href="/products" className="text-slate-500 active:text-slate-800 p-1">
           <ArrowLeft size={20} />
@@ -175,27 +329,16 @@ export default function ProductEditPage() {
       </header>
 
       <main className="p-4 space-y-3 max-w-md mx-auto">
-
         {errorMsg && (
           <div className="bg-rose-50 border border-rose-200 rounded-xl p-2 text-xs text-rose-700">
             ⚠️ {errorMsg}
           </div>
         )}
 
-        {/* Remarks */}
-        <textarea
-          value={form.remarks}
-          onChange={(e) => handleChange('remarks', e.target.value)}
-          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-300 h-10"
-          placeholder="비고 입력"
-        />
-
-        {/* Part Number */}
         <div className="flex items-center gap-2 mt-2">
           <label className="text-xs font-medium text-slate-600 whitespace-nowrap w-20">
             Part Number
           </label>
-
           <input
             type="text"
             value={form.part_number}
@@ -211,6 +354,13 @@ export default function ProductEditPage() {
         {renderLine('Distance', 'distance_value', codes.distance)}
         {renderLine('Wave', 'wavelength_value', codes.wavelength)}
 
+        <textarea
+          value={form.remarks}
+          onChange={(e) => handleChange('remarks', e.target.value)}
+          className="w-full px-2 py-1.5 text-sm rounded-lg border border-slate-300 h-10"
+          placeholder="비고 입력"
+        />
+
         <button
           onClick={handleSubmit}
           disabled={saving}
@@ -218,7 +368,6 @@ export default function ProductEditPage() {
         >
           {saving ? '저장 중...' : '수정하기'}
         </button>
-
       </main>
     </div>
   );

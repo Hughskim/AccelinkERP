@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
-
 import traceback
-import sys
+
 from app.database import get_db
 from app.models.product import ProductCode, ProductMaster
 from app.schemas.product_schema import (
@@ -36,25 +35,16 @@ def get_codes_by_type(code_type: str, db: Session = Depends(get_db)):
 
 
 # 신규 코드 등록
-
-@router.post("/", response_model=ProductMasterResponse, status_code=status.HTTP_201_CREATED, summary="신규 제품 등록")
-def create_product(product_data: ProductMasterCreate, db: Session = Depends(get_db)):
-    # 💡 데이터 변환과 가공 과정 전체를 try 안으로 이동합니다.
+@router.post("/codes", response_model=ProductCodeResponse, status_code=status.HTTP_201_CREATED, summary="신규 제품 코드 등록")
+def create_product_code(code_data: ProductCodeCreate, db: Session = Depends(get_db)):
+    db_code = ProductCode(**code_data.model_dump())
     try:
-        print("📥 [CREATE_PRODUCT] RECEIVED PAYLOAD:", product_data.model_dump(), flush=True)
-        
-        db_product = ProductMaster(**product_data.model_dump())
-        db.add(db_product)
+        db.add(db_code)
         db.commit()
-        db.refresh(db_product)
-        return db_product
-        
+        db.refresh(db_code)
+        return db_code
     except Exception as e:
         db.rollback()
-        # 💡 flush=True를 주면 Render 콘솔에 실시간으로 즉시 출력됩니다.
-        print("🔥 [CREATE_PRODUCT] FATAL DB/SERVER ERROR:", str(e), flush=True)
-        traceback.print_exc(file=sys.stdout) # 💡 출력 버퍼 우회를 위해 표준 출력으로 강제 지정
-        sys.stdout.flush()
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -84,8 +74,8 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
 # 신규 제품 등록
 @router.post("/", response_model=ProductMasterResponse, status_code=status.HTTP_201_CREATED, summary="신규 제품 등록")
 def create_product(product_data: ProductMasterCreate, db: Session = Depends(get_db)):
-    db_product = ProductMaster(**product_data.model_dump())
     try:
+        db_product = ProductMaster(**product_data.model_dump())
         db.add(db_product)
         db.commit()
         db.refresh(db_product)
@@ -118,5 +108,5 @@ def update_product(product_id: int, product_data: ProductMasterCreate, db: Sessi
     except Exception as e:
         db.rollback()
         print("🔥 DB ERROR:", e)
-        traceback.print_exc()   # ← Render에서도 전체 에러 스택이 출력됨
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))

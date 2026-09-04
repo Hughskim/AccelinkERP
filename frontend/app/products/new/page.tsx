@@ -64,9 +64,7 @@ export default function ProductCreatePage() {
         wavelength: [],
       };
 
-      const types = Object.keys(formatted);
-
-      for (const key of types) {
+      Object.keys(formatted).forEach((key) => {
         formatted[key] = data
           .filter((d: any) => d.code_type === key)
           .sort((a: any, b: any) => a.code_sort_order - b.code_sort_order)
@@ -75,7 +73,7 @@ export default function ProductCreatePage() {
             name: d.code_name,
             sort: d.code_sort_order,
           }));
-      }
+      });
 
       setCodes(formatted);
     } catch (err) {
@@ -146,6 +144,46 @@ export default function ProductCreatePage() {
       [type]: { type, value: '', name: '' },
     });
     setShowNewCode({ ...showNewCode, [type]: false });
+  };
+
+  const handleSubmit = async () => {
+    if (!form.part_number.trim()) {
+      setErrorMsg('Part Number는 필수입니다.');
+      return;
+    }
+
+    setSaving(true);
+    setErrorMsg(null);
+
+    try {
+      const payload = {
+        part_number: form.part_number,
+        is_active: true,
+        remarks: form.remarks || null,
+
+        category_value: form.category_value || null,
+        datarate_value: form.datarate_value || null,
+        package_value: form.package_value || null,
+        distance_value: form.distance_value || null,
+        wavelength_value: form.wavelength_value || null,
+        temp_value: form.temp_value || null,
+      };
+
+      // 💡 주소 끝에 슬래시(/)를 붙여 307 Temporary Redirect 예방
+      const res = await fetch('https://accelinkerp.onrender.com/api/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error('등록 실패');
+
+      router.push('/products');
+    } catch (err) {
+      setErrorMsg('제품 등록 중 오류가 발생했습니다.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const renderLine = (label: string, field: string, list: any[]) => {
@@ -233,45 +271,6 @@ export default function ProductCreatePage() {
         )}
       </div>
     );
-  };
-
-  const handleSubmit = async () => {
-    if (!form.part_number.trim()) {
-      setErrorMsg('Part Number는 필수입니다.');
-      return;
-    }
-
-    setSaving(true);
-    setErrorMsg(null);
-
-    try {
-      const payload = {
-        part_number: form.part_number,
-        is_active: true,
-        remarks: form.remarks || null,
-
-        category_value: form.category_value || null,
-        datarate_value: form.datarate_value || null,
-        package_value: form.package_value || null,
-        distance_value: form.distance_value || null,
-        wavelength_value: form.wavelength_value || null,
-        temp_value: form.temp_value || null,
-      };
-
-      const res = await fetch('https://accelinkerp.onrender.com/api/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) throw new Error('등록 실패');
-
-      router.push('/products');
-    } catch (err) {
-      setErrorMsg('제품 등록 중 오류가 발생했습니다.');
-    } finally {
-      setSaving(false);
-    }
   };
 
   return (
